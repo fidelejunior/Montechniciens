@@ -19,4 +19,25 @@
       "type": "image/png"
     }
   ]
+,
+"screenshots": [
+  {
+    "src": "screenshot1.png",
+    "sizes": "390x844",
+    "type": "image/png",
+    "form_factor": "narrow"
+  },
+  {
+    "src": "screenshot2.png",
+    "sizes": "390x844",
+    "type": "image/png",
+    "form_factor": "narrow"
+  },
+  {
+    "src": "screenshot3.png",
+    "sizes": "390x844",
+    "type": "image/png",
+    "form_factor": "narrow"
+  }
+]
 }
