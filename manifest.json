@@ -1,6 +1,6 @@
 {
-  "name": "MonTechnicien",
-  "short_name": "MonTechnicien",
+  "name": "Montechniciens",
+  "short_name": "Montechniciens",
   "description": "La plateforme des techniciens de terrain",
   "start_url": "/",
   "display": "standalone",
