@@ -379,8 +379,6 @@
       .db-main{margin-left:0;}
     }
   </style>
-  <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#f59e0b">
 </head>
 <body>
 <div id="app">
@@ -479,7 +477,7 @@
       <div class="plan-card" style="text-align:center;">
         <div style="font-size:2.2rem;margin-bottom:0.75rem;">👤</div>
         <div class="plan-name">Profil professionnel</div>
-        <p style="font-size:0.8rem;color:var(--muted2);margin:0.5rem 0 0;">Créez votre portfolio et soyez visible par les entreprises gratuitement.</p>
+        <p style="font-size:0.8rem;color:var(--muted2);margin:0.5rem 0 0;">0;">Créez votre portfolio et soyez visible par les entreprises gratuitement.</p>
       </div>
       <div class="plan-card" style="text-align:center;">
         <div style="font-size:2.2rem;margin-bottom:0.75rem;">🌍</div>
@@ -596,7 +594,7 @@
 
   <!-- MAIN -->
   <div class="db-main">
-    <div class="topbar">
+  <div class="topbar">
       <div class="search-box"><input type="text" placeholder="Rechercher une technique..." oninput="handleSearch(this.value)"/></div>
       <div class="topbar-right">
         <div class="tb-btn" onclick="showDB('ai')" title="Assistant IA">🤖</div>
@@ -967,7 +965,6 @@ const FICHE_DETAIL = {
 // ══════════════════════════════════════
 const ADS = [
   {icon:"🔌",title:"Câbles et matériel électrique — Legrand",desc:"Distribution officielle en Afrique. Câbles HO7, tableaux, disjoncteurs certifiés.",cta:"Voir le catalogue"},
-  {icon:"🔧",title:"Outillage Facom Pro",desc:"Clés dynamométriques, tournevis isolés 1000V, malles de technicien. Livraison rapide.",cta:"Découvrir"},
   {icon:"🏗️",title:"Matériaux de construction — CimAfrique",desc:"Ciment, parpaings, ferrailles. Meilleurs prix pour les professionnels du bâtiment.",cta:"Demander un devis"},
   {icon:"❄️",title:"Fluides frigorigènes R410A & R32",desc:"Bouteilles homologuées, récupération incluse. Livraison chantier en 48h.",cta:"Commander"},
   {icon:"☀️",title:"Panneaux solaires — SolarTech Africa",desc:"Panneaux monocristallins 400Wc, onduleurs Fronius, batteries lithium. Devis gratuit.",cta:"Obtenir un devis"},
@@ -1043,9 +1040,8 @@ function showDB(page){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const map={accueil:'Tableau de bord',ai:'Assistant IA',profil:'Mon profil'};
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.textContent.trim().startsWith(map[page]||'##'))n.classList.add('active');});
-}
-
-let lastDomain='',lastSub='';
+  }
+  let lastDomain='',lastSub='';
 
 function showTechs(domain,sub){
   lastDomain=domain;lastSub=sub;
@@ -1183,9 +1179,8 @@ function showTyping(){
   const div=document.createElement('div');div.className='msg-row';div.id=id;
   div.innerHTML=`<div class="msg-av bot-av">🤖</div><div class="typing-ind"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
   msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;return id;
-}
-
-function removeTyping(id){const el=document.getElementById(id);if(el)el.remove();}
+  }
+  function removeTyping(id){const el=document.getElementById(id);if(el)el.remove();}
 
 function clearAI(){
   aiHistory=[];
@@ -1207,11 +1202,140 @@ function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g
 
 function handleAIKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAI();}}
 function autoResizeAI(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
-<script>
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('/sw.js');
-  }
 </script>
+<!-- ══ FIREBASE ══ -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyBA6XOyxEkRBUke4I046932ddie7IfA-IU",
+  authDomain:"montechniciens-155be.firebaseapp.com",
+  projectId:"montechniciens-155be",
+  storageBucket:"montechniciens-155be.firebasestorage.app",
+  messagingSenderId:"142924162399",
+  appId:"1:142924162399:web:0b89550778ab1a96a4c2ea"
+});
+const auth=firebase.auth();
+const db=firebase.firestore();
+
+// Ecoute connexion/deconnexion
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    const doc=await db.collection('techniciens').doc(user.uid).get();
+    if(doc.exists){
+      const d=doc.data();
+      currentUser={name:d.nom,email:user.email,domain:d.domaine,domainLabel:d.domaineLabel,uid:user.uid};
+      document.getElementById('landing').style.display='none';
+      document.getElementById('dashboard').style.display='block';
+      updateUI();
+    }
+  } else {
+    currentUser=null;
+    document.getElementById('dashboard').style.display='none';
+    document.getElementById('landing').style.display='block';
+  }
+});
+
+// CONNEXION
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pw=document.getElementById('loginPassword').value;
+  if(!email||!pw){showErr('Veuillez remplir tous les champs.');return;}
+  setLoading(true,'Connexion...');
+  try{
+    await auth.signInWithEmailAndPassword(email,pw);
+    closeModal();
+  }catch(e){
+    const m={'auth/user-not-found':'Email introuvable.','auth/wrong-password':'Mot de passe incorrect.','auth/invalid-email':'Email invalide.','auth/too-many-requests':'Trop de tentatives, réessayez plus tard.'};
+    showErr(m[e.code]||'Erreur de connexion.');
+  }
+  setLoading(false);
+}
+
+// INSCRIPTION
+async function doSignup(){
+  const name=document.getElementById('signupName').value.trim();
+  const email=document.getElementById('signupEmail').value.trim();
+  const domain=document.getElementById('signupDomain').value;
+  const pw=document.getElementById('signupPassword').value;
+  if(!name||!email||!domain||!pw){showErr('Veuillez remplir tous les champs.');return;}
+  if(pw.length<6){showErr('Mot de passe : minimum 6 caractères.');return;}
+  const labels={elec:'⚡ Électricité & Production',civil:'🏗️ Génie Civil & Construction',thermo:'🌡️ Thermodynamique & Fluides'};
+  setLoading(true,'Création du compte...');
+  try{
+    const cred=await auth.createUserWithEmailAndPassword(email,pw);
+    await db.collection('techniciens').doc(cred.user.uid).set({
+      nom:name,email:email,domaine:domain,domaineLabel:labels[domain],
+      dateInscription:firebase.firestore.FieldValue.serverTimestamp(),
+      diplomes:[],interventions:[],langues:[],profilPublic:true
+    });
+    closeModal();
+  }catch(e){
+    const m={'auth/email-already-in-use':'Cet email est déjà utilisé.','auth/weak-password':'Mot de passe trop faible.','auth/invalid-email':'Email invalide.'};
+    showErr(m[e.code]||'Erreur lors de la création du compte.');
+  }
+  setLoading(false);
+}
+
+// DÉCONNEXION
+async function doLogout(){await auth.signOut();}
+
+// MISE À JOUR UI
+function updateUI(){
+  if(!currentUser)return;
+  const ini=currentUser.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('sidebarInitials').textContent=ini;
+  document.getElementById('sidebarName').textContent=currentUser.name;
+  document.getElementById('sidebarRole').textContent=currentUser.domainLabel;
+  document.getElementById('welcomeTitle').textContent='Bonjour, '+currentUser.name.split(' ')[0]+' 👋';
+  document.getElementById('profileName').textContent=currentUser.name;
+  document.getElementById('profileDomain').textContent=currentUser.domainLabel;
+  loadProfil();
+}
+
+// CHARGER PROFIL
+async function loadProfil(){
+  if(!currentUser)return;
+  try{
+    const doc=await db.collection('techniciens').doc(currentUser.uid).get();
+    if(!doc.exists)return;
+    const d=doc.data();
+    const nbD=d.diplomes?d.diplomes.length:0;
+    const nbI=d.interventions?d.interventions.length:0;
+    const nbL=d.langues?d.langues.length:0;
+    const nums=document.querySelectorAll('.ps-num');
+    if(nums[0])nums[0].textContent=nbD;
+    if(nums[1])nums[1].textContent=nbI;
+    if(nums[2])nums[2].textContent=nbL;
+    if(d.diplomes&&d.diplomes.length>0){
+      const html=d.diplomes.map(x=>`<div class="diploma-item"><div class="diploma-name">${x.titre}</div><div class="diploma-meta">${x.organisme} · ${x.annee}</div></div>`).join('');
+      const sec=document.querySelector('.profile-section');
+      if(sec)sec.innerHTML='<div class="profile-section-title">📜 Mes diplômes</div>'+html;
+    }
+    if(d.interventions&&d.interventions.length>0){
+      const html=d.interventions.map(x=>`<div class="interv-item"><div class="interv-row"><div><div class="interv-name">${x.titre}</div><div class="interv-meta">${x.lieu} · ${x.date}</div></div><span class="status-done">✓ Terminée</span></div></div>`).join('');
+      const secs=document.querySelectorAll('.profile-section');
+      if(secs[1])secs[1].innerHTML='<div class="profile-section-title">🔧 Mes interventions</div>'+html;
+    }
+  }catch(e){console.log('Erreur profil:',e);}
+}
+
+// HELPERS
+function showErr(msg){
+  let el=document.getElementById('authErr');
+  if(!el){el=document.createElement('div');el.id='authErr';el.style.cssText='background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:0.6rem 1rem;font-size:0.8rem;color:#fca5a5;margin-top:0.75rem;';document.querySelector('.modal').appendChild(el);}
+  el.textContent='⚠️ '+msg;el.style.display='block';
+}
+function setLoading(on,msg=''){
+  document.querySelectorAll('.btn-modal-submit').forEach(b=>{b.disabled=on;if(on)b.textContent=msg;});
+  if(!on){
+    const btns=document.querySelectorAll('.btn-modal-submit');
+    if(btns[0])btns[0].textContent='Se connecter';
+    if(btns[1])btns[1].textContent='Créer mon compte';
+    const e=document.getElementById('authErr');if(e)e.style.display='none';
+  }
+}
 </script>
 </body>
 </html>
